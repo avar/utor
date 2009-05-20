@@ -16,6 +16,7 @@ Dependencies
 -----------------
 rtorrent with XML-RPC interface
 unrar
+rtpg-www
 Perl and the following Perl modules:
     List::Util
     POE::Component::IRC
