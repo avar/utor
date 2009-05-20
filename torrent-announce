@@ -1,0 +1,119 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use DateTime;
+use DateTime::Duration;
+use DateTime::Format::Human::Duration;
+use File::Basename qw(fileparse);
+use Fcntl ':flock';
+use POE;
+use POE::Component::IRC::Common qw(parse_user NORMAL DARK_GREEN DARK_BLUE ORANGE);
+use POE::Component::IRC::Plugin::Connector;
+use POE::Component::IRC::Plugin::FollowTail;
+use POE::Component::IRC::State;
+
+# only run one instance of the IRC bot at a time
+open my $self, '<', $0 or die "Couldn't open self: $!";
+flock $self, LOCK_EX | LOCK_NB or die "This script is already running";
+
+POE::Session->create(
+    package_states => [
+        (__PACKAGE__) => [qw(_start interrupt enqueue_torrent finish_torrent irc_tail_input)],
+    ],
+);
+
+$poe_kernel->run();
+
+sub _start {
+    my ($kernel, $session, $heap) = @_[KERNEL, SESSION, HEAP];
+
+    $kernel->sig(INT => 'interrupt');
+    
+    my $irc_pass = qx/cat bouncer_pass.txt/;
+    chomp $irc_pass;
+
+    $heap->{irc} = POE::Component::IRC::State->spawn(
+        nick         => 'freenode',
+        password     => $irc_pass,
+        server       => 'localhost',
+        port         => 50445,
+        debug        => 1,
+        plugin_debug => 1,
+    );
+
+    # Uncomment this if you're not using a bouncer.
+    # See "perldoc POE::Component:IRC::Plugin::AutoJoin"
+    #
+    #$heap->{irc}->plugin_add('AutoJoin', POE::Component::IRC::Plugin::AutoJoin->new(
+    #    Channels => ['#channel1', '#channel2'],
+    #));
+        
+    $heap->{irc}->plugin_add('Connector', POE::Component::IRC::Plugin::Connector->new());
+    $heap->{irc}->plugin_add('FollowTail', POE::Component::IRC::Plugin::FollowTail->new(
+        filename => '/tmp/torrentlog',
+    ));
+
+    $heap->{irc}->yield('connect');
+}
+
+sub interrupt {
+    $_[HEAP]->{irc}->yield('shutdown');
+}
+
+sub irc_tail_input {
+    my ($action, $args) = split /,/, $_[ARG1], 2;
+
+    $_[KERNEL]->yield(enqueue_torrent => $args) if $action eq 'enqueue';
+    $_[KERNEL]->yield(finish_torrent => $args) if $action eq 'finish';
+}
+
+sub enqueue_torrent {
+    my (undef, $hash, $bytes, $file) = split /,/, $_[ARG0], 4;
+    my $irc = $_[HEAP]->{irc};
+
+    my $name = fileparse($file);
+    $name =~ s/\.torrent$//;
+    my $user = getpwuid((stat $file)[4]);
+
+    my $size = $bytes > 1024
+        ? $bytes > 1_048_576
+            ? $bytes > 1_073_741_824
+                ? sprintf("%.2fGB", $bytes / 1_073_741_824)
+                : sprintf("%.1fMB", $bytes / 1_048_576)
+            : sprintf("%.0fKB", $bytes / 1024)
+        : "$bytes bytes"
+    ;
+    
+    my $msg = DARK_BLUE.'Enqueued: '.ORANGE.$name.NORMAL." ($size, by $user)";
+    my $channels = $irc->channels();
+    $irc->yield(notice => $_, $msg) for keys %$channels;
+}
+
+sub finish_torrent {
+    my ($finished, $hash, $bytes, $file) = split /,/, $_[ARG0], 4;
+    my $irc = $_[HEAP]->{irc};
+    my $enqueued = (stat $file)[9];
+
+    my $enq_date = DateTime->from_epoch(epoch => $enqueued);
+    my $fin_date = DateTime->from_epoch(epoch => $finished);
+    my $dur_obj = $fin_date - $enq_date;
+    my $span = DateTime::Format::Human::Duration->new();
+    my $dur_human = $span->format_duration($dur_obj);
+
+    my $name = fileparse($file);
+    $name =~ s/\.torrent$//;
+
+    my $secs = $finished - $enqueued;
+    my $bps = $bytes / $secs;
+    my $rate = $bps > 1024
+        ? $bps > 1_048_576
+            ? sprintf("%.1fMB/s", $bps / 1_048_576)
+            : sprintf("%.0fKB/s", $bps / 1024)
+        : sprintf("%.0fB/s", $bps)
+    ;
+
+    my $msg = DARK_GREEN.'Finished: '.ORANGE.$name.NORMAL." in $dur_human ($rate)";
+    my $channels = $irc->channels();
+    $irc->yield(notice => $_, $msg) for keys %$channels;
+}

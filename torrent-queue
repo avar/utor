@@ -1,0 +1,52 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+# you might need to change these to fit your setup
+use lib '/usr/share/rtpg-www';
+my $rpc_url = 'http://torrent.example.com/RPC2';
+my $complete_dir = '/home/leech/torrent/complete';
+
+use List::Util 'first';
+use RTPG;
+
+# accessing the xml-rpc interface will hang unless we fork
+exit if fork;
+
+my ($hash, $action) = @ARGV;
+my $rtpg = RTPG->new(url => $rpc_url);
+
+my $size = $rtpg->rpc_command('d.get_size_bytes', $hash);
+my $file = $rtpg->rpc_command('d.get_tied_to_file', $hash);
+my @log_values = ($action, time, $hash, $size, $file);
+
+if ($action eq 'finish') {
+    my $content = $rtpg->rpc_command('d.get_name', $hash);
+    chdir $complete_dir;
+    if (-d $content) {
+        unrar_from_dir($content);
+        unrar_from_dir($_) for grep { -d } glob "$content/CD*";
+    }
+}
+
+local $" = ',';
+system "echo '@log_values' >> /tmp/torrentlog";
+
+sub unrar_from_dir {
+    my ($dir) = @_;
+
+    my @files = sort grep { chomp; /\.r(?:ar|\d+)$/ } qx/find '$dir' -maxdepth 1/;
+    if (@files) {
+        my $target = $files[0];
+        if (my ($rar) = first { /\.rar$/ } @files) {
+            $target = $rar;
+        }
+
+        # extract if the archive only has one file
+        my @file_count = split /\n/, qx/unrar lb '$target'/;
+        if (@file_count == 1) {
+            system "unrar x -o+ '$target'";
+        }
+    }
+}

@@ -1,0 +1,65 @@
+Description
+-----------------
+torrent-queue is a program which accepts messages from rtorrent and logs them
+to a log file. When rtorrent tells it that a torrent has finished,
+torrent-queue inspects the downloaded content, and if it is a rar archive (or
+a directory a rar archive, or a directory with CD[1-9] directories which have
+rar archives), it will unrar said archives as long as they contain no more
+than a single file or directory.
+
+torrent-announce follows the log file created by torrent-queue and announces
+any new/finished torrents on IRC, along with the user who added it, the size,
+and the time (and average download speed) it took to download it.
+
+
+Dependencies
+-----------------
+rtorrent with XML-RPC interface
+unrar
+Perl and the following Perl modules:
+    List::Util
+    POE::Component::IRC
+    DateTime::Format::Human::Duration
+
+You can install the Perl modules with this command:
+    cpan List::Util POE::Component::IRC DateTime::Format::Human::Duration
+
+
+Installation
+-----------------
+Put torrent-queue and torrent-announce somewhere on your filesystem. Make sure
+they're executable. torrent-queue needs to be executable by the user that's
+running rtorrent.
+
+Create the file /tmp/torrentlog and have it owned by the rtorrent user, e.g.:
+
+    touch /tmp/torrentlog
+    sudo chown leech /tmp/torrentlog
+
+Edit torrent-queue and change $rpc_url and $complete_dir so it knows how to
+reach your rtorrent's XML-RPC interface and where your torrent content goes
+when it has completed downloading.
+
+
+rtorrent configuration
+-----------------
+Your rtorrent version must support the XML-RPC interface. .rtorrent.rc must
+have the following lines in it (change paths/port where
+needed):
+
+    # torrent-queue hooks
+    on_insert = enqueue,"execute=/PATH/TO/torrent-queue,$d.get_hash=,enqueue"
+    on_finished = finish,"execute=/PATH/TO/torrent-queue,$d.get_hash=,finish"
+
+    # XML-RPC interface
+    scgi_port = localhost:5000
+    encoding_list = UTF-8
+
+
+Running
+-----------------
+Restart rtorrent after you've edited .rtorrent.rc as instructed above. Then
+start the torrent-announce bot. By default it is configured to connect to an
+IRC proxy/bouncer on port 50445, using the contents of bouncer_pass.txt (in
+the current directory) as the password. You can change this by editing
+torrent-announce.
