@@ -5,7 +5,7 @@ use warnings;
 
 # you might need to change these to fit your setup
 use lib '/usr/share/rtpg-www';
-my $rpc_url = 'http://torrent.example.com/RPC2';
+my $rpc_url = 'http://scgi.rtorrent.nix.is/RPC2';
 my $complete_dir = '/home/leech/torrent/complete';
 
 use List::Util 'first';

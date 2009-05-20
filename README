@@ -15,7 +15,7 @@ and the time (and average download speed) it took to download it.
 Dependencies
 -----------------
 rtorrent with XML-RPC interface
-unrar
+unrar (Debian folks: that means the nonfree version)
 rtpg-www
 Perl and the following Perl modules:
     List::Util
