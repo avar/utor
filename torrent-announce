@@ -89,7 +89,7 @@ sub enqueue_torrent {
 sub finish_torrent {
     my ($finished, $hash, $bytes, $rars, $file) = split /,/, $_[ARG0], 5;
 
-    my $enqueued = (stat $file)[9];
+    my $enqueued = (stat $file)[10];
     my $duration = _duration($enqueued, $finished);
     my $name = fileparse($file);
     $name =~ s/\.torrent$//;
