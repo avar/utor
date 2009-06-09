@@ -8,7 +8,7 @@ use DateTime::Format::Human::Duration;
 use File::Basename qw(fileparse);
 use Fcntl ':flock';
 use POE;
-use POE::Component::IRC::Common qw(parse_user NORMAL DARK_GREEN DARK_BLUE ORANGE);
+use POE::Component::IRC::Common qw(parse_user NORMAL DARK_GREEN DARK_BLUE ORANGE TEAL);
 use POE::Component::IRC::Plugin::Connector;
 use POE::Component::IRC::Plugin::FollowTail;
 use POE::Component::IRC::State;
@@ -19,7 +19,7 @@ flock $self, LOCK_EX | LOCK_NB or die "This script is already running";
 
 POE::Session->create(
     package_states => [
-        (__PACKAGE__) => [qw(_start interrupt enqueue_torrent finish_torrent irc_tail_input)],
+        (__PACKAGE__) => [qw(_start announce interrupt enqueue_torrent finish_torrent unrar_torrent irc_tail_input)],
     ],
 );
 
@@ -63,14 +63,11 @@ sub interrupt {
 
 sub irc_tail_input {
     my ($action, $args) = split /,/, $_[ARG1], 2;
-
-    $_[KERNEL]->yield(enqueue_torrent => $args) if $action eq 'enqueue';
-    $_[KERNEL]->yield(finish_torrent => $args) if $action eq 'finish';
+    $_[KERNEL]->yield("${action}_torrent" => $args);
 }
 
 sub enqueue_torrent {
-    my (undef, $hash, $bytes, $file) = split /,/, $_[ARG0], 4;
-    my $irc = $_[HEAP]->{irc};
+    my (undef, $hash, $bytes, undef, $file) = split /,/, $_[ARG0], 5;
 
     my $name = fileparse($file);
     $name =~ s/\.torrent$//;
@@ -86,21 +83,14 @@ sub enqueue_torrent {
     ;
     
     my $msg = DARK_BLUE.'Enqueued: '.ORANGE.$name.NORMAL." ($size, by $user)";
-    my $channels = $irc->channels();
-    $irc->yield(notice => $_, $msg) for keys %$channels;
+    $poe_kernel->yield(announce => $msg);
 }
 
 sub finish_torrent {
-    my ($finished, $hash, $bytes, $file) = split /,/, $_[ARG0], 4;
-    my $irc = $_[HEAP]->{irc};
+    my ($finished, $hash, $bytes, $rars, $file) = split /,/, $_[ARG0], 5;
+
     my $enqueued = (stat $file)[9];
-
-    my $enq_date = DateTime->from_epoch(epoch => $enqueued);
-    my $fin_date = DateTime->from_epoch(epoch => $finished);
-    my $dur_obj = $fin_date - $enq_date;
-    my $span = DateTime::Format::Human::Duration->new();
-    my $dur_human = $span->format_duration($dur_obj);
-
+    my $duration = _duration($enqueued, $finished);
     my $name = fileparse($file);
     $name =~ s/\.torrent$//;
 
@@ -113,7 +103,36 @@ sub finish_torrent {
         : sprintf("%.0fB/s", $bps)
     ;
 
-    my $msg = DARK_GREEN.'Finished: '.ORANGE.$name.NORMAL." in $dur_human ($rate)";
+    my $msg = DARK_GREEN.'Finished: '.ORANGE.$name.NORMAL." in $duration ($rate)";
+    $msg .= "; $rars files to unrar" if $rars;
+    $poe_kernel->yield(announce => $msg);
+}
+
+sub unrar_torrent {
+    my ($start, $finish, $rars, $file) = split /,/, $_[ARG0], 5;
+
+    my $duration = _duration($start, $finish);
+    my $name = fileparse($file);
+    $name =~ s/\.torrent$//;
+
+    my $files = $rars > 1 ? 'files' : 'file';
+    my $msg = TEAL.'Unrared: '.ORANGE.$name.NORMAL." in $duration ($rars $files)";
+    $poe_kernel->yield(announce => $msg);
+}
+
+sub announce {
+    my ($heap, $msg) = @_[HEAP, ARG0];
+    my $irc = $heap->{irc};
     my $channels = $irc->channels();
     $irc->yield(notice => $_, $msg) for keys %$channels;
+}
+
+sub _duration {
+    my ($start, $finish) = @_;
+
+    my $enq_date = DateTime->from_epoch(epoch => $start);
+    my $fin_date = DateTime->from_epoch(epoch => $finish);
+    my $dur_obj = $fin_date - $enq_date;
+    my $span = DateTime::Format::Human::Duration->new();
+    return $span->format_duration($dur_obj);
 }

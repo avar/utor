@@ -19,21 +19,35 @@ my $rtpg = RTPG->new(url => $rpc_url);
 
 my $size = $rtpg->rpc_command('d.get_size_bytes', $hash);
 my $file = $rtpg->rpc_command('d.get_tied_to_file', $hash);
-my @log_values = ($action, time, $hash, $size, $file);
-
-if ($action eq 'finish') {
-    my $content = $rtpg->rpc_command('d.get_name', $hash);
-    chdir $complete_dir;
-    if (-d $content) {
-        unrar_from_dir($content);
-        unrar_from_dir($_) for grep { -d } glob "$content/CD*";
-    }
-}
+my @log_values = ($action, time, $hash, $size, 0, $file);
 
 local $" = ',';
-system "echo '@log_values' >> /tmp/torrentlog";
+if ($action eq 'enqueue') {
+    system "echo '@log_values' >> /tmp/torrentlog";
+}
+elsif ($action eq 'finish') {
+    my $content = $rtpg->rpc_command('d.get_name', $hash);
+    chdir $complete_dir;
+    my @rars;
+    if (-d $content) {
+        push @rars, files_to_unrar($content);
+        push @rars, files_to_unrar($_) for grep { -d } glob "$content/CD*";
+    }
 
-sub unrar_from_dir {
+    $log_values[4] = scalar @rars;
+    system "echo '@log_values' >> /tmp/torrentlog";
+
+    my $unrar_start = time;
+    for my $rar (@rars) {
+        system "unrar x -o+ '$rar'";
+    }
+    my $unrar_finish = time;
+
+    @log_values = ('unrar', $unrar_start, $unrar_finish, scalar @rars, $file);
+    system "echo '@log_values' >> /tmp/torrentlog";
+}
+
+sub files_to_unrar {
     my ($dir) = @_;
 
     my @files = sort grep { chomp; /\.r(?:ar|\d+)$/ } qx/find '$dir' -maxdepth 1/;
@@ -46,7 +60,7 @@ sub unrar_from_dir {
         # extract if the archive only has one file
         my @file_count = split /\n/, qx/unrar lb '$target'/;
         if (@file_count == 1) {
-            system "unrar x -o+ '$target'";
+            return $target;
         }
     }
 }
