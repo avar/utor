@@ -37,14 +37,16 @@ elsif ($action eq 'finish') {
     $log_values[4] = scalar @rars;
     system "echo '@log_values' >> /tmp/torrentlog";
 
-    my $unrar_start = time;
-    for my $rar (@rars) {
-        system "unrar x -o+ '$rar'";
-    }
-    my $unrar_finish = time;
+    if (@rars) {
+        my $unrar_start = time;
+        for my $rar (@rars) {
+            system "unrar x -o+ '$rar'";
+        }
+        my $unrar_finish = time;
 
-    @log_values = ('unrar', $unrar_start, $unrar_finish, scalar @rars, $file);
-    system "echo '@log_values' >> /tmp/torrentlog";
+        @log_values = ('unrar', $unrar_start, $unrar_finish, scalar @rars, $file);
+        system "echo '@log_values' >> /tmp/torrentlog";
+    }
 }
 
 sub files_to_unrar {
