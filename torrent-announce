@@ -104,7 +104,8 @@ sub finish_torrent {
     ;
 
     my $msg = DARK_GREEN.'Finished: '.ORANGE.$name.NORMAL." in $duration ($rate)";
-    $msg .= "; $rars files to unrar" if $rars;
+    my $files = $rars > 1 ? 'files' : 'file';
+    $msg .= "; $rars $files to unrar" if $rars;
     $poe_kernel->yield(announce => $msg);
 }
 
