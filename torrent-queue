@@ -18,7 +18,7 @@ my ($hash, $action) = @ARGV;
 my $rtpg = RTPG->new(url => $rpc_url);
 
 my $size = $rtpg->rpc_command('d.get_size_bytes', $hash);
-my $file = $rtpg->rpc_command('d.get_tied_to_file', $hash);
+my $file = $rtpg->rpc_command('d.get_loaded_file', $hash);
 my @log_values = ($action, time, $hash, $size, 0, $file);
 
 local $" = ',';
