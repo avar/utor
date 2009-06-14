@@ -68,6 +68,7 @@ sub irc_tail_input {
 
 sub enqueue_torrent {
     my (undef, $hash, $bytes, undef, $file) = split /,/, $_[ARG0], 5;
+    return if !defined $hash || !defined $bytes || !defined $file;
 
     my $name = fileparse($file);
     $name =~ s/\.torrent$//;
@@ -88,6 +89,7 @@ sub enqueue_torrent {
 
 sub finish_torrent {
     my ($finished, $hash, $bytes, $rars, $file) = split /,/, $_[ARG0], 5;
+    return if !defined $finished || !defined $hash || !defined $bytes || !defined $rars || !defined $file;
 
     my $enqueued = (stat $file)[10];
     my $duration = _duration($enqueued, $finished);
@@ -111,6 +113,7 @@ sub finish_torrent {
 
 sub unrar_torrent {
     my ($start, $finish, $rars, $file) = split /,/, $_[ARG0], 5;
+    return if !defined $start || !defined $finish || !defined $rars || !defined $file;
 
     my $duration = _duration($start, $finish);
     my $name = fileparse($file);
