@@ -1,9 +1,12 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use File::Spec::Functions 'catfile';
+use FindBin;
 use List::Util 'first';
+use YAML::Any 'LoadFile';
 
-my $complete_dir = '/home/leech/torrent/complete';
+my $cfg = LoadFile(catfile($FindBin::Bin, 'utor.yml'));
 
 my ($action, $hash, $size, $file, $name) = @ARGV;
 my @log_values = ($action, time, $hash, $size, 0, $file);
@@ -13,7 +16,7 @@ if ($action eq 'inserted_new') {
 }
 elsif ($action eq 'finished') {
     my $content = $name;
-    chdir $complete_dir;
+    chdir $cfg->{complete_dir};
     my @rars;
     if (-d $content) {
         push @rars, files_to_unrar($content);

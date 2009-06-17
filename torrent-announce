@@ -14,10 +14,14 @@ use POE::Component::IRC::Plugin::FollowTail;
 use POE::Component::IRC::State;
 use FindBin;
 use File::Spec::Functions qw(catfile);
+use YAML::Any qw(LoadFile);
 
 # only run one instance of the IRC bot at a time
 open my $self, '<', $0 or die "Couldn't open self: $!";
 flock $self, LOCK_EX | LOCK_NB or die "This script is already running";
+
+my $config = LoadFile(catfile($FindBin::Bin, 'utor.yml'));
+die 'No IRC server specified' if !defined $config->{irc_server};
 
 POE::Session->create(
     package_states => [
@@ -31,26 +35,21 @@ sub _start {
     my ($kernel, $session, $heap) = @_[KERNEL, SESSION, HEAP];
 
     $kernel->sig(INT => 'interrupt');
-    
-    my $irc_pass_path = catfile($FindBin::Bin, 'bouncer_pass.txt');
-    my $irc_pass = qx/cat $irc_pass_path/;
-    chomp $irc_pass;
 
     $heap->{irc} = POE::Component::IRC::State->spawn(
-        nick         => 'freenode',
-        password     => $irc_pass,
-        server       => 'localhost',
-        port         => 50445,
+        nick         => $config->{irc_nick},
+        password     => $config->{irc_pass},
+        server       => $config->{irc_server},
+        port         => $config->{irc_port},
         debug        => 1,
         plugin_debug => 1,
     );
 
-    # Uncomment this if you're not using a bouncer.
-    # See "perldoc POE::Component:IRC::Plugin::AutoJoin"
-    #
-    #$heap->{irc}->plugin_add('AutoJoin', POE::Component::IRC::Plugin::AutoJoin->new(
-    #    Channels => ['#channel1', '#channel2'],
-    #));
+    if ($config->{irc_channel}) {
+        $heap->{irc}->plugin_add('AutoJoin', POE::Component::IRC::Plugin::AutoJoin->new(
+            Channels => [$config->{irc_channel}],
+        ));
+    }
         
     $heap->{irc}->plugin_add('Connector', POE::Component::IRC::Plugin::Connector->new());
     $heap->{irc}->plugin_add('FollowTail', POE::Component::IRC::Plugin::FollowTail->new(

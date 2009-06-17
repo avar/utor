@@ -20,6 +20,7 @@ Perl and the following Perl modules:
     List::Util
     POE::Component::IRC
     DateTime::Format::Human::Duration
+    YAML::Any
 
 You can install the Perl modules with this command:
     cpan List::Util POE::Component::IRC DateTime::Format::Human::Duration
@@ -36,8 +37,7 @@ Create the file /tmp/torrentlog and have it owned by the rtorrent user, e.g.:
     touch /tmp/torrentlog
     sudo chown leech /tmp/torrentlog
 
-Edit torrent-queue and change $complete_dir so it knows where your
-torrent content goes when it has completed downloading.
+Edit utor.yml to your needs.
 
 
 rtorrent configuration
@@ -53,14 +53,14 @@ rtorrent configuration
 Running
 -----------------
 Restart rtorrent after you've edited .rtorrent.rc as instructed above. Then
-start the torrent-announce bot. By default it is configured to connect to an
-IRC proxy/bouncer on port 50445, using the contents of bouncer_pass.txt (in
-the current directory) as the password. You can change this by editing
-torrent-announce.
+start the torrent-announce bot. We recommend editing utor.yml so that it
+connects to an IRC proxy. That way you can restart torrent-announce if needed
+without spamming your channel with join/quit messages.
 
-torrent-announce has been tested with the App::Bondage IRC proxy, you
-can install it as:
+Any properly configured IRC proxy will do. We've been using the App::Bondage
+IRC proxy, you can install it with
 
     cpan App::Bondage
 
-See the App::Bondage documentation for further information.
+See the App::Bondage documentation (`perldoc App::Bondage`) for further
+information.

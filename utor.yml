@@ -1,0 +1,6 @@
+complete_dir: /home/leech/torrent/complete
+irc_server: localhost
+irc_port: 50444
+irc_pass: foobar
+irc_nick: utor
+irc_channel: '#foobar'
