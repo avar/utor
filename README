@@ -64,3 +64,10 @@ start the torrent-announce bot. By default it is configured to connect to an
 IRC proxy/bouncer on port 50445, using the contents of bouncer_pass.txt (in
 the current directory) as the password. You can change this by editing
 torrent-announce.
+
+torrent-announce has been tested with the App::Bondage IRC proxy, you
+can install it as:
+
+    cpan App::Bondage
+
+See the App::Bondage documentation for further information.
