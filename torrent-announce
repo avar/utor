@@ -109,8 +109,8 @@ sub finished_torrent {
     ;
 
     my $msg = DARK_GREEN.'Finished: '.ORANGE.$name.NORMAL." in $duration ($rate)";
-    my $files = $rars > 1 ? 'files' : 'file';
-    $msg .= "; $rars $files to unrar" if $rars;
+    my $archives = $rars > 1 ? 'archives' : 'archive';
+    $msg .= "; $rars $archives to unrar" if $rars;
     $poe_kernel->yield(announce => $msg);
 }
 
@@ -122,8 +122,8 @@ sub unrar_torrent {
     my $name = fileparse($file);
     $name =~ s/\.torrent$//;
 
-    my $files = $rars > 1 ? 'files' : 'file';
-    my $msg = TEAL.'Unrared: '.ORANGE.$name.NORMAL." in $duration ($rars $files)";
+    my $archives = $rars > 1 ? 'archives' : 'archive';
+    my $msg = TEAL.'Unrared: '.ORANGE.$name.NORMAL." in $duration ($rars $archives)";
     $poe_kernel->yield(announce => $msg);
 }
 
