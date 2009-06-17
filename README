@@ -14,7 +14,7 @@ and the time (and average download speed) it took to download it.
 
 Dependencies
 -----------------
-rtorrent
+rtorrent >= 0.8.4
 unrar (Debian folks: that means the nonfree version)
 Perl and the following Perl modules:
     List::Util
