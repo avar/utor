@@ -21,9 +21,8 @@ my $size = $rtpg->rpc_command('d.get_size_bytes', $hash);
 my $file = $rtpg->rpc_command('d.get_loaded_file', $hash);
 my @log_values = ($action, time, $hash, $size, 0, $file);
 
-local $" = ',';
 if ($action eq 'enqueue') {
-    system "echo '@log_values' >> /tmp/torrentlog";
+    torrentlog(@log_values);
 }
 elsif ($action eq 'finish') {
     my $content = $rtpg->rpc_command('d.get_name', $hash);
@@ -35,7 +34,7 @@ elsif ($action eq 'finish') {
     }
 
     $log_values[4] = scalar @rars;
-    system "echo '@log_values' >> /tmp/torrentlog";
+    torrentlog(@log_values);
 
     if (@rars) {
         my $unrar_start = time;
@@ -45,8 +44,16 @@ elsif ($action eq 'finish') {
         my $unrar_finish = time;
 
         @log_values = ('unrar', $unrar_start, $unrar_finish, scalar @rars, $file);
-        system "echo '@log_values' >> /tmp/torrentlog";
+        torrentlog(@log_values);
     }
+}
+
+sub torrentlog
+{
+    my @values = @_;
+    open my $log, ">>", "/tmp/torrentlog" or die "Can't open torrentlog: $!";
+    print $log join(',', @values), "\n";
+    close $log;
 }
 
 sub files_to_unrar {
