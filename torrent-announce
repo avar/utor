@@ -21,7 +21,7 @@ flock $self, LOCK_EX | LOCK_NB or die "This script is already running";
 
 POE::Session->create(
     package_states => [
-        (__PACKAGE__) => [qw(_start announce interrupt enqueue_torrent finish_torrent unrar_torrent irc_tail_input)],
+        (__PACKAGE__) => [qw(_start announce interrupt inserted_new_torrent finished_torrent unrar_torrent irc_tail_input)],
     ],
 );
 
@@ -69,7 +69,7 @@ sub irc_tail_input {
     $_[KERNEL]->yield("${action}_torrent" => $args);
 }
 
-sub enqueue_torrent {
+sub inserted_new_torrent {
     my (undef, $hash, $bytes, undef, $file) = split /,/, $_[ARG0], 5;
     return if !defined $hash || !defined $bytes || !defined $file;
 
@@ -90,7 +90,7 @@ sub enqueue_torrent {
     $poe_kernel->yield(announce => $msg);
 }
 
-sub finish_torrent {
+sub finished_torrent {
     my ($finished, $hash, $bytes, $rars, $file) = split /,/, $_[ARG0], 5;
     return if !defined $finished || !defined $hash || !defined $bytes || !defined $rars || !defined $file;
 

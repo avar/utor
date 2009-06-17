@@ -1,31 +1,18 @@
 #!/usr/bin/env perl
-
 use strict;
 use warnings;
+use List::Util 'first';
 
-# you might need to change these to fit your setup
-use lib '/usr/share/rtpg-www';
-my $rpc_url = 'http://scgi.rtorrent.nix.is/RPC2';
 my $complete_dir = '/home/leech/torrent/complete';
 
-use List::Util 'first';
-use RTPG;
-
-# accessing the xml-rpc interface will hang unless we fork
-exit if fork;
-
-my ($hash, $action) = @ARGV;
-my $rtpg = RTPG->new(url => $rpc_url);
-
-my $size = $rtpg->rpc_command('d.get_size_bytes', $hash);
-my $file = $rtpg->rpc_command('d.get_loaded_file', $hash);
+my ($action, $hash, $size, $file, $name) = @ARGV;
 my @log_values = ($action, time, $hash, $size, 0, $file);
 
-if ($action eq 'enqueue') {
+if ($action eq 'inserted_new') {
     torrentlog(@log_values);
 }
-elsif ($action eq 'finish') {
-    my $content = $rtpg->rpc_command('d.get_name', $hash);
+elsif ($action eq 'finished') {
+    my $content = $name;
     chdir $complete_dir;
     my @rars;
     if (-d $content) {
@@ -39,7 +26,7 @@ elsif ($action eq 'finish') {
     if (@rars) {
         my $unrar_start = time;
         for my $rar (@rars) {
-            system "unrar x -o+ '$rar'";
+            system "unrar x -o+ '$rar'" and die "Can't unrar '$rar': $!";
         }
         my $unrar_finish = time;
 
