@@ -32,11 +32,6 @@ Put torrent-queue and torrent-announce somewhere on your filesystem. Make sure
 they're executable. torrent-queue needs to be executable by the user that's
 running rtorrent.
 
-Create the file /tmp/torrentlog and have it owned by the rtorrent user, e.g.:
-
-    touch /tmp/torrentlog
-    sudo chown leech /tmp/torrentlog
-
 Edit utor.yml to your needs.
 
 
@@ -53,9 +48,10 @@ rtorrent configuration
 Running
 -----------------
 Restart rtorrent after you've edited .rtorrent.rc as instructed above. Then
-start the torrent-announce bot. We recommend editing utor.yml so that it
-connects to an IRC proxy. That way you can restart torrent-announce if needed
-without spamming your channel with join/quit messages.
+start the torrent-announce bot as the same user that runs torrent-queue. We
+recommend editing utor.yml so that it connects to an IRC proxy. That way you
+can restart torrent-announce if needed without spamming your channel with
+join/quit messages.
 
 Any properly configured IRC proxy will do. We've been using the App::Bondage
 IRC proxy, you can install it with

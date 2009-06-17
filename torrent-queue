@@ -6,7 +6,7 @@ use FindBin;
 use List::Util 'first';
 use YAML::Any 'LoadFile';
 
-my $cfg = LoadFile(catfile($FindBin::Bin, 'utor.yml'));
+my $config = LoadFile(catfile($FindBin::Bin, 'utor.yml'));
 
 my ($action, $hash, $size, $file, $name) = @ARGV;
 my @log_values = ($action, time, $hash, $size, 0, $file);
@@ -16,7 +16,7 @@ if ($action eq 'inserted_new') {
 }
 elsif ($action eq 'finished') {
     my $content = $name;
-    chdir $cfg->{complete_dir};
+    chdir $config->{complete_dir};
     my @rars;
     if (-d $content) {
         push @rars, files_to_unrar($content);
@@ -41,7 +41,7 @@ elsif ($action eq 'finished') {
 sub torrentlog
 {
     my @values = @_;
-    open my $log, ">>", "/tmp/torrentlog" or die "Can't open torrentlog: $!";
+    open my $log, ">>", $config->{log_file} or die "Can't open torrentlog: $!";
     print $log join(',', @values), "\n";
     close $log;
 }

@@ -1,4 +1,5 @@
 complete_dir: /home/leech/torrent/complete
+log_file: /tmp/torrentlog
 irc_server: localhost
 irc_port: 50444
 irc_pass: foobar
