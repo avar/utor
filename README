@@ -49,8 +49,8 @@ have the following lines in it (change paths/port where
 needed):
 
     # torrent-queue hooks
-    on_insert = enqueue,"execute=/PATH/TO/torrent-queue,$d.get_hash=,enqueue"
-    on_finished = finish,"execute=/PATH/TO/torrent-queue,$d.get_hash=,finish"
+    system.method.set_key = event.download.inserted_new,utor_enqueue,"execute=/PATH/TO/torrent-queue,$d.get_hash=,enqueue"
+    system.method.set_key = event.download.finished,utor_finish,"execute=/PATH/TO/torrent-queue,$d.get_hash=,finish"
 
     # XML-RPC interface
     scgi_port = localhost:5000
