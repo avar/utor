@@ -21,7 +21,7 @@ my $size = $rtpg->rpc_command('d.get_size_bytes', $hash);
 my $file = $rtpg->rpc_command('d.get_loaded_file', $hash);
 my @log_values = ($action, time, $hash, $size, 0, $file);
 
-if ($action eq 'enqueue') {
+if ($action eq 'enqueue' or $action eq 'erased') {
     torrentlog(@log_values);
 }
 elsif ($action eq 'finish') {
