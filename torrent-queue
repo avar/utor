@@ -8,19 +8,28 @@ use YAML::Any 'LoadFile';
 
 my $config = LoadFile(catfile($FindBin::Bin, 'utor.yml'));
 
-my ($action, $hash, $size, $file, $name) = @ARGV;
-my @log_values = ($action, time, $hash, $size, 0, $file);
+my ($action, $hash, $size, $torrent, $content) = @ARGV;
+my @log_values = ($action, time, $hash, $size, 0, $torrent);
 
 if ($action eq 'inserted_new') {
     torrentlog(@log_values);
 }
 elsif ($action eq 'finished') {
-    my $content = $name;
     chdir $config->{complete_dir};
     my @rars;
+
     if (-d $content) {
         push @rars, files_to_unrar($content);
         push @rars, files_to_unrar($_) for grep { -d } glob "$content/CD*";
+    }
+    elsif ($content =~ /\.rar$/) {
+        if (rar_contents($content) > 1) {
+            my $dest_dir = $content;
+            $dest_dir =~ s/\.rar$//;
+            mkdir $dest_dir;
+            chdir $dest_dir;
+        }
+        push @rars, $content;
     }
 
     $log_values[4] = scalar @rars;
@@ -29,11 +38,12 @@ elsif ($action eq 'finished') {
     if (@rars) {
         my $unrar_start = time;
         for my $rar (@rars) {
-            system "unrar x -o+ '$rar'" and die "Can't unrar '$rar': $!";
+            my $rar_path = catfile($config->{complete_dir}, $rar);
+            system "unrar x -o+ '$rar_path'" and die "Can't unrar '$rar': $!";
         }
         my $unrar_finish = time;
 
-        @log_values = ('unrar', $unrar_start, $unrar_finish, scalar @rars, $file);
+        @log_values = ('unrar', $unrar_start, $unrar_finish, scalar @rars, $torrent);
         torrentlog(@log_values);
     }
 }
@@ -56,10 +66,20 @@ sub files_to_unrar {
             $target = $rar;
         }
 
-        # extract if the archive only has one file
-        my @file_count = split /\n/, qx/unrar lb '$target'/;
-        if (@file_count == 1) {
-            return $target;
-        }
+        return $target if rar_contents($target) == 1;
     }
 }
+
+sub rar_contents {
+    my ($rar) = @_;
+    return split /\n/, qx/unrar lb '$rar'/;
+}
+
+=head1 NAME
+
+torren-queue - Do various stuff when torrents are enqueued/finished
+
+=head1 AUTHOR
+
+Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
+Ævar Arnfjörð Bjarmason <avar@cpan.org>

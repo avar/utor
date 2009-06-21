@@ -149,3 +149,12 @@ sub _duration {
     my $span = DateTime::Format::Human::Duration->new();
     return $span->format_duration($dur_obj);
 }
+
+=head1 NAME
+
+torrent-announce - An IRC bot that announces when torrents are enqueued,
+finished, and unrared
+
+=head1 AUTHOR
+
+Hinrik Örn Sigurðsson <hinrik.sig@gmail.com>
