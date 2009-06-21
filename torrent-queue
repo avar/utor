@@ -68,6 +68,7 @@ sub find_rar {
 
         return $target if rar_contents($target) == 1;
     }
+    return;
 }
 
 sub rar_contents {
