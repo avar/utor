@@ -2,14 +2,22 @@ Description
 -----------------
 torrent-queue is a program which accepts messages from rtorrent and logs them
 to a log file. When rtorrent tells it that a torrent has finished,
-torrent-queue inspects the downloaded content, and if it is a rar archive (or
-a directory a rar archive, or a directory with CD[1-9] directories which have
-rar archives), it will unrar said archives as long as they contain no more
-than a single file or directory.
+torrent-queue inspects the downloaded content, and will call unrar in these
+situations:
+
+ * The content is a single rar file. If the rar archive contains more than one
+   file/directory, a directory will be created to contain them, with the same
+   name as the archive withou the ".rar")
+
+ * The content is a directory with a rar archive that contains a single
+   file/directory
+
+ * The content is a directory containing CD[1-9] subdirectories which have
+   rar archives (containing only a single file/directory each)
 
 torrent-announce follows the log file created by torrent-queue and announces
-any new/finished torrents on IRC, along with the user who added it, the size,
-and the time (and average download speed) it took to download it.
+any added/finished/unrared torrents on IRC, along with some useful information
+like username, size, transfer speed, etc.
 
 
 Dependencies
