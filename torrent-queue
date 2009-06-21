@@ -19,8 +19,8 @@ elsif ($action eq 'finished') {
     my @rars;
 
     if (-d $content) {
-        push @rars, files_to_unrar($content);
-        push @rars, files_to_unrar($_) for grep { -d } glob "$content/CD*";
+        push @rars, find_rar($content);
+        push @rars, find_rar($_) for grep { -d } glob "$content/CD*";
     }
     elsif ($content =~ /\.rar$/) {
         if (rar_contents($content) > 1) {
@@ -56,7 +56,7 @@ sub torrentlog
     close $log;
 }
 
-sub files_to_unrar {
+sub find_rar {
     my ($dir) = @_;
 
     my @files = sort grep { chomp; /\.r(?:ar|\d+)$/ } qx/find '$dir' -maxdepth 1/;
