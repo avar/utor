@@ -72,7 +72,7 @@ sub files_to_unrar {
 
 sub rar_contents {
     my ($rar) = @_;
-    return split /\n/, qx/unrar lb '$rar'/;
+    return split /^/, qx/unrar lb '$rar'/;
 }
 
 =head1 NAME
