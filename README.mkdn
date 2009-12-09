@@ -1,5 +1,12 @@
+utor
+====
+
+utor is a bot that announces changes in rtorrent's status to IRC
+
+
 Description
------------------
+-----------
+
 torrent-queue is a program which accepts messages from rtorrent and logs them
 to a log file. When rtorrent tells it that a torrent has finished,
 torrent-queue inspects the downloaded content, and will call unrar in these
@@ -21,7 +28,7 @@ like username, size, transfer speed, etc.
 
 
 Dependencies
------------------
+------------
 rtorrent >= 0.8.4
 unrar (Debian folks: that means the nonfree version)
 Perl and the following Perl modules:
@@ -35,7 +42,7 @@ You can install the Perl modules with this command:
 
 
 Installation
------------------
+------------
 Put torrent-queue and torrent-announce somewhere on your filesystem. Make sure
 they're executable. torrent-queue needs to be executable by the user that's
 running rtorrent.
