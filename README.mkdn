@@ -29,15 +29,17 @@ like username, size, transfer speed, etc.
 
 Dependencies
 ------------
-rtorrent >= 0.8.4
-unrar (Debian folks: that means the nonfree version)
-Perl and the following Perl modules:
-    List::Util
-    POE::Component::IRC
-    DateTime::Format::Human::Duration
-    YAML::Any
+
+ * rtorrent >= 0.8.4
+ * unrar (Debian folks: that means the nonfree version)
+ * Perl and the following Perl modules:
+   * List::Util
+   * POE::Component::IRC
+   * DateTime::Format::Human::Duration
+   * YAML::Any
 
 You can install the Perl modules with this command:
+
     cpan List::Util POE::Component::IRC DateTime::Format::Human::Duration
 
 
