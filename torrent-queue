@@ -59,7 +59,7 @@ sub torrentlog
 sub find_rar {
     my ($dir) = @_;
 
-    my @files = sort grep { chomp; /\.(?:r(?:ar|\d+)|\.\d+)$/ } qx/find '$dir' -maxdepth 1/;
+    my @files = sort grep { chomp; /\.(?:r(?:ar|\d+)|\d+)$/ } qx/find '$dir' -maxdepth 1/;
     if (@files) {
         my $target = $files[0];
         if (my ($rar) = first { /\.rar$/ } @files) {
