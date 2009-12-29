@@ -10,6 +10,7 @@ use Fcntl ':flock';
 use POE;
 use POE::Component::IRC::Common qw(parse_user NORMAL DARK_GREEN DARK_BLUE ORANGE TEAL);
 use POE::Component::IRC::Plugin::Connector;
+use POE::Component::IRC::Plugin::AutoJoin;
 use POE::Component::IRC::Plugin::FollowTail;
 use POE::Component::IRC::State;
 use FindBin;
