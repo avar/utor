@@ -39,6 +39,7 @@ elsif ($action eq 'finished') {
         my $unrar_start = time;
         for my $rar (@rars) {
             my $rar_path = catfile($config->{complete_dir}, $rar);
+            exit if fork; # let's not hold up rtorrent while we unrar
             system "unrar x -o+ '$rar_path'" and die "Can't unrar '$rar': $!";
         }
         my $unrar_finish = time;
