@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-
+use autodie ':all';
 use strict;
 use warnings;
 use DateTime;
@@ -19,16 +19,15 @@ use YAML::Any qw(LoadFile);
 use Format::Human::Bytes;
 
 # only run one instance of the IRC bot at a time
-open my $self, '<', $0 or die "Couldn't open self: $!";
-flock $self, LOCK_EX | LOCK_NB or die "This script is already running";
+open my $self, '<', $0;
+flock $self, LOCK_EX | LOCK_NB;
 
 my $config = LoadFile(catfile($FindBin::Bin, 'utor.yml'));
 die 'No IRC server specified' if !defined $config->{irc_server};
 die 'No log file specified' if !defined $config->{log_file};
 
 if (!-e $config->{log_file}) {
-    open my $log_handle, '>>', $config->{log_file}
-        or die "Couldn't create log file $config->{log_file}";
+    open my $log_handle, '>>', $config->{log_file};
     close $log_handle;
 }
 
