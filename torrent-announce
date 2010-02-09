@@ -16,6 +16,7 @@ use POE::Component::IRC::State;
 use FindBin;
 use File::Spec::Functions qw(catfile);
 use YAML::Any qw(LoadFile);
+use Format::Human::Bytes;
 
 # only run one instance of the IRC bot at a time
 open my $self, '<', $0 or die "Couldn't open self: $!";
@@ -84,15 +85,8 @@ sub inserted_new_torrent {
     $name =~ s/\.torrent$//;
     my $user = getpwuid((stat $file)[4]);
 
-    my $size = $bytes > 1024
-        ? $bytes > 1_048_576
-            ? $bytes > 1_073_741_824
-                ? sprintf("%.2fGB", $bytes / 1_073_741_824)
-                : sprintf("%.1fMB", $bytes / 1_048_576)
-            : sprintf("%.0fKB", $bytes / 1024)
-        : "$bytes bytes"
-    ;
-    
+    my $size = fmt_bytes($bytes);
+
     my $msg = DARK_BLUE.'Enqueued: '.ORANGE.$name.NORMAL." ($size, by $user)";
     $poe_kernel->yield(announce => $msg);
 }
@@ -107,13 +101,12 @@ sub finished_torrent {
     $name =~ s/\.torrent$//;
 
     my $secs = $finished - $enqueued;
+    # Sometimes it's that fast, avoid division by zero
+    $secs = 1 if $secs == 0;
+
     my $bps = $bytes / $secs;
-    my $rate = $bps > 1024
-        ? $bps > 1_048_576
-            ? sprintf("%.1fMB/s", $bps / 1_048_576)
-            : sprintf("%.0fKB/s", $bps / 1024)
-        : sprintf("%.0fB/s", $bps)
-    ;
+    my $size = fmt_bytes($bps);
+    my $rate = "$size/s";
 
     my $msg = DARK_GREEN.'Finished: '.ORANGE.$name.NORMAL." in $duration ($rate)";
     my $archives = $rars > 1 ? 'archives' : 'archive';
@@ -150,6 +143,8 @@ sub _duration {
     my $span = DateTime::Format::Human::Duration->new();
     return $span->format_duration($dur_obj);
 }
+
+sub fmt_bytes { Format::Human::Bytes::base2( $_[0] ) }
 
 =head1 NAME
 
